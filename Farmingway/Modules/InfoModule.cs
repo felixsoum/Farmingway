@@ -3,7 +3,7 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 
-namespace Farmingway
+namespace Farmingway.Modules
 {
     // Create a module with no prefix
     public class InfoModule : ModuleBase<SocketCommandContext>

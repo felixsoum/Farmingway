@@ -2,9 +2,6 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Farmingway
@@ -12,19 +9,20 @@ namespace Farmingway
     internal class Program
     {
         public static Task Main(string[] args) => new Program().MainAsync();
+        public static bool isExiting;
 
-        private DiscordSocketClient _client;
+        DiscordSocketClient client;
         CommandService commandService;
         CommandHandler commandHandler;
 
         public async Task MainAsync()
         {
             
-            _client = new DiscordSocketClient();
+            client = new DiscordSocketClient();
             commandService = new CommandService();
-            commandHandler = new CommandHandler(_client, commandService);
+            commandHandler = new CommandHandler(client, commandService);
 
-            _client.Log += Log;
+            client.Log += Log;
             commandService.Log += Log;
 
             //  You can assign your bot token to a string, and pass that in to connect.
@@ -37,11 +35,14 @@ namespace Farmingway
             // var token = JsonConvert.DeserializeObject<AConfigurationClass>(File.ReadAllText("config.json")).Token;
 
             await commandHandler.InstallCommandsAsync();
-            await _client.LoginAsync(TokenType.Bot, token);
-            await _client.StartAsync();
+            await client.LoginAsync(TokenType.Bot, token);
+            await client.StartAsync();
 
-            // Block this task until the program is closed.
-            await Task.Delay(-1);
+            // Block this task until the exit command is used.
+            await Task.Run(() =>
+            {
+                while (!isExiting) { }
+            });
         }
 
         private Task Log(LogMessage msg)
@@ -49,5 +50,7 @@ namespace Farmingway
             Console.WriteLine("Log: " + msg);
             return Task.CompletedTask;
         }
+
+        internal static void Exit() => isExiting = true;
     }
 }

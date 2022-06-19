@@ -114,15 +114,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Exceptions\NotFoundException.cs" />
+    <Compile Include="Modules\SystemModule.cs" />
     <Compile Include="RestResponses\CharacterResponse.cs" />
     <Compile Include="CollectService.cs" />
     <Compile Include="CommandHandler.cs" />
-    <Compile Include="InfoModule.cs" />
-    <Compile Include="PingModule.cs" />
+    <Compile Include="Modules\InfoModule.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RestResponses\MountResponse.cs" />
-    <Compile Include="SampleModule.cs" />
+    <Compile Include="Modules\SampleModule.cs" />
     <Compile Include="Secret.cs" />
   </ItemGroup>
   <ItemGroup>
