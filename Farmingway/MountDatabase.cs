@@ -27,15 +27,15 @@ namespace Farmingway
 
         internal static List<MountResponse> GetPonies()
         {
-            var ponies = new List<MountResponse>();
+            var ponies = new SortedList<int, MountResponse>();
             foreach (var mount in mounts)
             {
                 if (IsPony(mount.Key))
                 {
-                    ponies.Add(mount.Value);
+                    ponies.Add(mount.Key, mount.Value);
                 }
             }
-            return ponies;
+            return ponies.Values.ToList();
         }
 
         internal static bool IsPony(int id)

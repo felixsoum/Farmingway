@@ -1,7 +1,4 @@
 ﻿using Discord.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,16 +8,20 @@ namespace Farmingway.Modules
 
     public class ListModule : ModuleBase<SocketCommandContext>
     {
+		[Command("")]
+		[Summary("Print help for !list.")]
+		public Task ListAsync() => ReplyAsync("Please specify which type of mount to list. Example: `!list ponies`");
+
 		// !list ponies
 		[Command("ponies")]
 		[Summary("List all ponies.")]
 		public async Task PoniesAsync()
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.AppendLine("Here's a list of all ponies:");
+			sb.AppendLine("**Here's a list of all ponies:**");
             foreach (var pony in MountDatabase.GetPonies())
             {
-				sb.AppendLine($"{pony.Id} - {pony.Name}");
+				sb.AppendLine($"{pony.Id}: {pony.Name}, {pony.Sources[0].Type} - {pony.Sources[0].Text}");
 			}
 			await ReplyAsync(sb.ToString());
 		}

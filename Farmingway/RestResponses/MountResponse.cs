@@ -17,6 +17,9 @@ namespace Farmingway.RestResponses
 
         [JsonProperty(PropertyName = "image")]
         public string Image { get; set; }
+
+        [JsonProperty(PropertyName = "sources")]
+        public MountSourceResponse[] Sources { get; set; }
     }
 
     public class AllMountResponse
@@ -26,5 +29,14 @@ namespace Farmingway.RestResponses
 
         [JsonProperty(PropertyName = "results")]
         public MountResponse[] Results { get; set; }
+    }
+
+    public class MountSourceResponse
+    {
+        [JsonProperty(PropertyName = "type")]
+        public string Type { get; set; }
+
+        [JsonProperty(PropertyName = "text")]
+        public string Text { get; set; }
     }
 }
