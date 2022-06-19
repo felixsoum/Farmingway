@@ -34,6 +34,8 @@ namespace Farmingway
             // var token = File.ReadAllText("token.txt");
             // var token = JsonConvert.DeserializeObject<AConfigurationClass>(File.ReadAllText("config.json")).Token;
 
+            await MountDatabase.Init();
+
             await commandHandler.InstallCommandsAsync();
             await client.LoginAsync(TokenType.Bot, token);
             await client.StartAsync();

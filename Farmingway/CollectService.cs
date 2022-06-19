@@ -1,6 +1,8 @@
 ﻿using Farmingway.Exceptions;
 using Farmingway.RestResponses;
 using RestSharp;
+using System;
+using System.Collections.Generic;
 
 namespace Farmingway
 {
@@ -54,6 +56,21 @@ namespace Farmingway
             }
 
             return response.Data;
+        }
+
+        public static MountResponse[] GetMounts()
+        {
+            var request = new RestRequest($"mounts");
+            var response = Client.Execute<AllMountResponse>(request);
+
+            if (response.Data == null || response.Data.Results.Length == 0)
+            {
+                throw new NotFoundException(
+                    "Unable to fetch mount data."
+                );
+            }
+
+            return response.Data.Results;
         }
     }
 }

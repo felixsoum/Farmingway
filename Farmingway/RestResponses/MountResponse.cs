@@ -18,4 +18,13 @@ namespace Farmingway.RestResponses
         [JsonProperty(PropertyName = "image")]
         public string Image { get; set; }
     }
+
+    public class AllMountResponse
+    {
+        [JsonProperty(PropertyName = "count")]
+        public int Count { get; set; }
+
+        [JsonProperty(PropertyName = "results")]
+        public MountResponse[] Results { get; set; }
+    }
 }

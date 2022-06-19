@@ -114,7 +114,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Exceptions\NotFoundException.cs" />
+    <Compile Include="Modules\ListModule.cs" />
     <Compile Include="Modules\SystemModule.cs" />
+    <Compile Include="MountDatabase.cs" />
     <Compile Include="RestResponses\CharacterResponse.cs" />
     <Compile Include="CollectService.cs" />
     <Compile Include="CommandHandler.cs" />
