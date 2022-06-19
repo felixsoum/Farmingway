@@ -114,6 +114,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="RestResponses\CharacterResponse.cs" />
+    <Compile Include="CollectService.cs" />
     <Compile Include="CommandHandler.cs" />
     <Compile Include="InfoModule.cs" />
     <Compile Include="PingModule.cs" />

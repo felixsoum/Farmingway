@@ -1,6 +1,4 @@
 ﻿using Discord.Commands;
-using Farmingway.RestResponses;
-using RestSharp;
 using System;
 using System.Threading.Tasks;
 
@@ -22,27 +20,26 @@ namespace Farmingway
         [Summary("Prints information about a character")]
         public Task CharAsync([Remainder][Summary("The id of your character")] string charId)
         {
-            string characterRequest = $"https://ffxivcollect.com/api/characters/{charId}?ids=true";
-
+            if (!int.TryParse(charId, out var id))
+            {
+                return ReplyAsync("Character ID was not a number");
+            }
+            
             try
             {
-                var characterClient = new RestClient(characterRequest);
-                var characterResponse = characterClient.Execute<CharacterResponse>(new RestRequest());
-                int highestMountID = characterResponse.Data.Mounts.IDs[characterResponse.Data.Mounts.IDs.Length - 1];
+                var character = CollectService.GetCharacter(id);
+                var highestMountID = character.Mounts.IDs[character.Mounts.IDs.Length - 1];
 
-                string mountRequest = $"https://ffxivcollect.com/api/mounts/{highestMountID}";
-                var mountClient = new RestClient(mountRequest);
-                var mountResponse = mountClient.Execute<MountResponse>(new RestRequest());
-                var reply = String.Join
+                var mount = CollectService.GetMount(highestMountID);
+                var reply = string.Join
                 (
                     "\n",
-                    $"Name: {characterResponse.Data.Name}",
-                    $"Server: {characterResponse.Data.Server}",
-                    $"Mounts: {characterResponse.Data.Mounts.Count}",
+                    $"Name: {character.Name}",
+                    $"Server: {character.Server}",
+                    $"Mounts: {character.Mounts.Count}",
                     $"Highest Mount ID: {highestMountID}",
-                    characterResponse.Data.Portrait,
-                    mountResponse.Data.Image
-
+                    character.Portrait,
+                    mount.Image
                 );
 
                 return ReplyAsync(reply);
