@@ -53,5 +53,57 @@ namespace Farmingway
                     return false;
             }
         }
+
+        internal static List<MountResponse> GetBirdies()
+        {
+            var birdies = new SortedList<int, MountResponse>();
+            foreach (var mount in mounts)
+            {
+                if (mount.Value.Name.Contains("Lanner"))
+                {
+                    birdies.Add(mount.Key, mount.Value);
+                }
+            }
+            return birdies.Values.ToList();
+        }
+
+        internal static List<MountResponse> GetDoggos()
+        {
+            var doggos = new SortedList<int, MountResponse>();
+            foreach (var mount in mounts)
+            {
+                if (mount.Value.Name.Contains("Kamuy"))
+                {
+                    doggos.Add(mount.Key, mount.Value);
+                }
+            }
+            return doggos.Values.ToList();
+        }
+
+        internal static List<MountResponse> GetGwibs()
+        {
+            var gwibbers = new SortedList<int, MountResponse>();
+            foreach (var mount in mounts)
+            {
+                if (mount.Value.Name.Contains("Gwiber"))
+                {
+                    gwibbers.Add(mount.Key, mount.Value);
+                }
+            }
+            return gwibbers.Values.ToList();
+        }
+
+        internal static List<MountResponse> GetGatos()
+        {
+            var gatos = new SortedList<int, MountResponse>();
+            foreach (var mount in mounts)
+            {
+                if (mount.Value.Name.Contains("Lynx"))
+                {
+                    gatos.Add(mount.Key, mount.Value);
+                }
+            }
+            return gatos.Values.ToList();
+        }
     }
 }
