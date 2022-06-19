@@ -43,12 +43,6 @@ namespace Farmingway
 
             Console.WriteLine("Msg: " + message);
 
-            if (message.ToString() == "!ping")
-            {
-                await messageParam.Channel.SendMessageAsync("pong");
-                return;
-            }
-
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
 
