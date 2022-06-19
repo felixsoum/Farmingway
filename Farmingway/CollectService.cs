@@ -26,6 +26,21 @@ namespace Farmingway
             return response.Data;
         }
 
+        public static CharacterResponse GetCharacterFromDiscord(ulong id)
+        {
+            var request = new RestRequest($"users/{id}").AddParameter("ids", "true");
+            var response = Client.Execute<CharacterResponse>(request);
+
+            if (response.Data?.Mounts == null)
+            {
+                throw new NotFoundException(
+                    "The specified user does not have a character registered with FFXIV Collect."
+                );
+            }
+            
+            return response.Data;
+        }
+
         public static MountResponse GetMount(int id)
         {
             var request = new RestRequest($"mounts/{id}");
