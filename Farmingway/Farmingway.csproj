@@ -113,6 +113,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exceptions\NotFoundException.cs" />
     <Compile Include="RestResponses\CharacterResponse.cs" />
     <Compile Include="CollectService.cs" />
     <Compile Include="CommandHandler.cs" />

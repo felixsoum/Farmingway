@@ -1,6 +1,7 @@
 ﻿using Discord.Commands;
 using System;
 using System.Threading.Tasks;
+using Discord;
 
 namespace Farmingway
 {
@@ -20,35 +21,37 @@ namespace Farmingway
         [Summary("Prints information about a character")]
         public Task CharAsync([Remainder][Summary("The id of your character")] string charId)
         {
-            if (!int.TryParse(charId, out var id))
-            {
-                return ReplyAsync("Character ID was not a number");
-            }
+            var embed = new EmbedBuilder();
             
             try
             {
+                if (!int.TryParse(charId, out var id))
+                {
+                    throw new Exception("Character ID was not a number");
+                }
+                
                 var character = CollectService.GetCharacter(id);
                 var highestMountID = character.Mounts.IDs[character.Mounts.IDs.Length - 1];
 
                 var mount = CollectService.GetMount(highestMountID);
-                var reply = string.Join
-                (
-                    "\n",
-                    $"Name: {character.Name}",
-                    $"Server: {character.Server}",
-                    $"Mounts: {character.Mounts.Count}",
-                    $"Highest Mount ID: {highestMountID}",
-                    character.Portrait,
-                    mount.Image
-                );
 
-                return ReplyAsync(reply);
+                embed.WithColor(new Color(0, 255, 0))
+                    .WithTitle($"Character data for ID {id}")
+                    .AddField("Name", character.Name)
+                    .AddField("Server", character.Server)
+                    .AddField("Mounts", character.Mounts.Count)
+                    .AddField("Highest Mount", $"{mount.Name} (ID {mount.Id})")
+                    .WithImageUrl(character.Portrait);
             }
             catch(Exception e)
             {
                 Console.Write("ERROR: " + e.Message);
-                return ReplyAsync("ERROR: " + e.Message);
+                embed.WithColor(new Color(255, 0, 0))
+                    .WithTitle("ERROR")
+                    .WithDescription(e.Message);
             }
+
+            return ReplyAsync(embed: embed.Build());
         }
 
         // ReplyAsync is a method on ModuleBase 
