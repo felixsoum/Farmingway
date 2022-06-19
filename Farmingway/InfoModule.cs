@@ -17,5 +17,15 @@ namespace Farmingway
 			=> ReplyAsync(echo);
 
 		// ReplyAsync is a method on ModuleBase 
+
+		// ~char 931843984 -> Xiaofei Li ...
+		[Command("char")]
+		[Summary("Prints information about a character")]
+		public Task CharAsync([Remainder][Summary("The id of your character")] string charId)
+        {
+			return ReplyAsync("Looking up info for id: " + charId);
+        }
+
+		// ReplyAsync is a method on ModuleBase 
 	}
 }
