@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
@@ -13,12 +14,18 @@ namespace Farmingway
         public static Task Main(string[] args) => new Program().MainAsync();
 
         private DiscordSocketClient _client;
+        CommandService commandService;
+        CommandHandler commandHandler;
 
         public async Task MainAsync()
         {
+            
             _client = new DiscordSocketClient();
+            commandService = new CommandService();
+            commandHandler = new CommandHandler(_client, commandService);
 
             _client.Log += Log;
+            commandService.Log += Log;
 
             //  You can assign your bot token to a string, and pass that in to connect.
             //  This is, however, insecure, particularly if you plan to have your code hosted in a public repository.
@@ -29,6 +36,7 @@ namespace Farmingway
             // var token = File.ReadAllText("token.txt");
             // var token = JsonConvert.DeserializeObject<AConfigurationClass>(File.ReadAllText("config.json")).Token;
 
+            await commandHandler.InstallCommandsAsync();
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();
 
@@ -38,7 +46,7 @@ namespace Farmingway
 
         private Task Log(LogMessage msg)
         {
-            Console.WriteLine(msg.ToString());
+            Console.WriteLine("Log: " + msg);
             return Task.CompletedTask;
         }
     }
