@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Farmingway
+namespace Farmingway.RestResponses
 {
     public class CharacterResponse
     {

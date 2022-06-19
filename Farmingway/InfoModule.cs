@@ -1,4 +1,5 @@
 ﻿using Discord.Commands;
+using Farmingway.RestResponses;
 using RestSharp;
 using System;
 using System.Threading.Tasks;
@@ -21,22 +22,27 @@ namespace Farmingway
         [Summary("Prints information about a character")]
         public Task CharAsync([Remainder][Summary("The id of your character")] string charId)
         {
-            string request = $"https://ffxivcollect.com/api/characters/{charId}?ids=true";
+            string characterRequest = $"https://ffxivcollect.com/api/characters/{charId}?ids=true";
 
             try
             {
-                var client = new RestClient(request);
-                var response = client.Execute<CharacterResponse>(new RestRequest());
+                var characterClient = new RestClient(characterRequest);
+                var characterResponse = characterClient.Execute<CharacterResponse>(new RestRequest());
+                int highestMountID = characterResponse.Data.Mounts.IDs[characterResponse.Data.Mounts.IDs.Length - 1];
 
-                int highestMountID = response.Data.Mounts.IDs[response.Data.Mounts.IDs.Length - 1];
+                string mountRequest = $"https://ffxivcollect.com/api/mounts/{highestMountID}";
+                var mountClient = new RestClient(mountRequest);
+                var mountResponse = mountClient.Execute<MountResponse>(new RestRequest());
                 var reply = String.Join
                 (
                     "\n",
-                    $"Name: {response.Data.Name}",
-                    $"Server: {response.Data.Server}",
-                    $"Mounts: {response.Data.Mounts.Count}",
+                    $"Name: {characterResponse.Data.Name}",
+                    $"Server: {characterResponse.Data.Server}",
+                    $"Mounts: {characterResponse.Data.Mounts.Count}",
                     $"Highest Mount ID: {highestMountID}",
-                    response.Data.Portrait
+                    characterResponse.Data.Portrait,
+                    mountResponse.Data.Image
+
                 );
 
                 return ReplyAsync(reply);
