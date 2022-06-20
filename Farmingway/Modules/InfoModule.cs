@@ -53,7 +53,7 @@ namespace Farmingway.Modules
 
         [Command("find")]
         [Summary("Prints information about a character by Discord username")]
-        public Task FindAsync([Remainder][Summary("The user requested")] IUser user)
+        public Task FindByUserAsync([Remainder][Summary("The user requested")] IUser user)
         {
             try
             {
@@ -68,28 +68,29 @@ namespace Farmingway.Modules
         
         [Command("find")]
         [Summary("Prints information about a character by Discord username")]
-        public async Task<IUserMessage> FindAsync([Summary("The user requested")] string username)
+        public async Task FindByUsernameAsync([Remainder][Summary("The user requested")] string username)
         {
             var userList = await (Context.User as IGuildUser).Guild.SearchUsersAsync(username);
 
-            if (userList.Count() != 1)
-            {
-                return await ReplyAsync(embed: CreateErrorEmbed(
-                    !userList.Any()
+            if (userList.Count != 1)
+            { 
+                await ReplyAsync(embed: CreateErrorEmbed(
+                    userList.Count == 0
                         ? "Could not find user"
                         : "Found multiple users (this will be turned into a prompt eventually)"
                 ));
+                return;
             }
             
             try
             {
                 var user = userList.First();
-                return await ReplyAsync(embed: CreateCharacterEmbed(user));
+                await ReplyAsync(embed: CreateCharacterEmbed(user));
             }
             catch(Exception e)
             {
                 Console.Write("ERROR: " + e.Message);
-                return await ReplyAsync(embed: CreateErrorEmbed(e.Message));
+                await ReplyAsync(embed: CreateErrorEmbed(e.Message));
             }
         }
 
