@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Farmingway
@@ -40,7 +39,7 @@ namespace Farmingway
 
         internal static bool IsPony(int id)
         {
-            switch(id)
+            switch (id)
             {
                 case 28: // Aithon (Ifrit)
                 case 29: // Xanthos (Garuda)
