@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Farmingway.RestResponses;
 
 namespace Farmingway.Modules
 {
@@ -54,92 +55,100 @@ namespace Farmingway.Modules
         [Summary("Prints information about a character by Discord username")]
         public Task FindAsync([Remainder][Summary("The user requested")] IUser user)
         {
-            var embed = new EmbedBuilder();
-            
             try
             {
-                var character = CollectService.GetCharacterFromDiscord(user.Id);
-                var highestMountID = character.Mounts.IDs[character.Mounts.IDs.Length - 1];
-
-                var mount = CollectService.GetMount(highestMountID);
-
-                embed.WithColor(new Color(0, 255, 0))
-                    .WithAuthor(
-                        $"Character data for Discord user {user.Username}#{user.DiscriminatorValue:D4}",
-                        user.GetAvatarUrl(size: 256)
-                    )
-                    .AddField("Name", character.Name)
-                    .AddField("Server", character.Server)
-                    .AddField("Mounts", character.Mounts.Count)
-                    .AddField("Highest Mount", $"{mount.Name} (ID {mount.Id})")
-                    .WithImageUrl(character.Portrait);
+                return ReplyAsync(embed: CreateCharacterEmbed(user));
             }
             catch(Exception e)
             {
                 Console.Write("ERROR: " + e.Message);
-                embed.WithColor(new Color(255, 0, 0))
-                    .WithTitle("ERROR")
-                    .WithDescription(e.Message);
+                return ReplyAsync(embed: CreateErrorEmbed(e.Message));
             }
-
-            return ReplyAsync(embed: embed.Build());
         }
         
-        [Command("findbyusername")]
+        [Command("find")]
         [Summary("Prints information about a character by Discord username")]
-        public Task FindByUsernameAsync([Summary("The user requested")] string username)
+        public async Task<IUserMessage> FindAsync([Summary("The user requested")] string username)
         {
-            var embed = new EmbedBuilder();
-            //(Context.Channel as IGuildChannel).Guild.GetUserAsync() looking into getting users a different way
-            var userList = Context.Guild.Users 
-                .Where(u => 
-                    string.Equals(u.Username, username, StringComparison.CurrentCultureIgnoreCase)
-                    || string.Equals(u.Nickname, username, StringComparison.CurrentCultureIgnoreCase)
-                )
-                .ToList();
+            var userList = await (Context.User as IGuildUser).Guild.SearchUsersAsync(username);
 
             if (userList.Count() != 1)
             {
-                embed.WithColor(new Color(255, 0, 0))
-                    .WithTitle("ERROR");
-
-                embed.WithDescription(
+                return await ReplyAsync(embed: CreateErrorEmbed(
                     !userList.Any()
-                    ? "Could not find user"
-                    : "Found multiple users (this will be turned into a prompt eventually"
-                );
-
-                return ReplyAsync(embed: embed.Build());
+                        ? "Could not find user"
+                        : "Found multiple users (this will be turned into a prompt eventually)"
+                ));
             }
             
             try
             {
                 var user = userList.First();
-                var character = CollectService.GetCharacterFromDiscord(user.Id);
-                var highestMountID = character.Mounts.IDs[character.Mounts.IDs.Length - 1];
-
-                var mount = CollectService.GetMount(highestMountID);
-
-                embed.WithColor(new Color(0, 255, 0))
-                    .WithAuthor(
-                        $"Character data for Discord user {user.Username}#{user.DiscriminatorValue:D4}",
-                        user.GetAvatarUrl(size: 256)
-                    )
-                    .AddField("Name", character.Name)
-                    .AddField("Server", character.Server)
-                    .AddField("Mounts", character.Mounts.Count)
-                    .AddField("Highest Mount", $"{mount.Name} (ID {mount.Id})")
-                    .WithImageUrl(character.Portrait);
+                return await ReplyAsync(embed: CreateCharacterEmbed(user));
             }
             catch(Exception e)
             {
                 Console.Write("ERROR: " + e.Message);
-                embed.WithColor(new Color(255, 0, 0))
-                    .WithTitle("ERROR")
-                    .WithDescription(e.Message);
+                return await ReplyAsync(embed: CreateErrorEmbed(e.Message));
             }
+        }
 
-            return ReplyAsync(embed: embed.Build());
+        /// <summary>
+        /// Create an embed with a Discord user's character details
+        /// </summary>
+        /// <param name="user">The Discord user to build an embed for</param>
+        /// <returns>An embed containing a character's name, home server, number of mounts, and mount with the highest ID</returns>
+        private static Embed CreateCharacterEmbed(IUser user)
+        {
+            var builder = new EmbedBuilder();
+            
+            var character = CollectService.GetCharacterFromDiscord(user.Id);
+
+            MountResponse mount;
+            try
+            {
+                var highestMountID = character.Mounts.IDs.Last();
+                mount = CollectService.GetMount(highestMountID);
+            }
+            catch (InvalidOperationException)
+            {
+                // User has no mounts
+                mount = null;
+            }
+            
+            builder.WithColor(new Color(0, 255, 0))
+                .WithAuthor(
+                    $"Character data for Discord user {user.Username}#{user.DiscriminatorValue:D4}",
+                    user.GetAvatarUrl()
+                )
+                .AddField("Name", character.Name)
+                .AddField("Server", character.Server)
+                .AddField("Mounts", character.Mounts.Count)
+                .AddField(
+                    "Highest Mount",  
+                    mount == null 
+                        ? "No mounts found" 
+                        : $"{mount.Name} (ID {mount.Id})"
+                )
+                .WithImageUrl(character.Portrait);
+
+            return builder.Build();
+        }
+
+        /// <summary>
+        /// Create an embed with error details
+        /// </summary>
+        /// <param name="message">The error message to include in the embed</param>
+        /// <returns>An embed with details about an internal error</returns>
+        private static Embed CreateErrorEmbed(string message)
+        {
+            var builder = new EmbedBuilder();
+
+            builder.WithColor(new Color(255, 0, 0))
+                .WithTitle("Error")
+                .WithDescription(message);
+
+            return builder.Build();
         }
 
         // ReplyAsync is a method on ModuleBase 
