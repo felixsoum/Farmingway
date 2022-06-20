@@ -72,7 +72,7 @@ namespace Farmingway
             var doggos = new SortedList<int, MountResponse>();
             foreach (var mount in mounts)
             {
-                if (mount.Value.Name.Contains("Kamuy"))
+                if (mount.Value.Name.Contains("Kamuy") && mount.Key != 181)
                 {
                     doggos.Add(mount.Key, mount.Value);
                 }
