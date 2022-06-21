@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using Discord.WebSocket;
 using Farmingway.RestResponses;
 
 namespace Farmingway.Modules
@@ -55,17 +56,21 @@ namespace Farmingway.Modules
 
         [Command("find")]
         [Summary("Prints information about a character by Discord username")]
-        public Task FindByUserAsync([Remainder][Discord.Commands.Summary("The user requested")] IUser user)
+        public async Task FindByUserAsync([Summary("The user requested")] params SocketGuildUser[] users)
         {
-            try
+            foreach (var user in users)
             {
-                return ReplyAsync(embed: CreateCharacterEmbed(user));
+                try
+                {
+                    await ReplyAsync(embed: CreateCharacterEmbed(user));
+                }
+                catch(Exception e)
+                {
+                    Console.Write("ERROR: " + e.Message);
+                    await ReplyAsync(embed: CreateErrorEmbed(e.Message));
+                }
             }
-            catch(Exception e)
-            {
-                Console.Write("ERROR: " + e.Message);
-                return ReplyAsync(embed: CreateErrorEmbed(e.Message));
-            }
+            
         }
         
         [Command("find")]
