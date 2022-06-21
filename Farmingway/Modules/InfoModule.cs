@@ -206,6 +206,22 @@ namespace Farmingway.Modules
             return builder.Build();
         }
 
-        // ReplyAsync is a method on ModuleBase 
+        // !whoshere
+        [Command("whoshere")]
+        [Summary("Print list of users in thread.")]
+        public async Task WhosHereASync()
+        {
+            var users = Context.Channel.GetUsersAsync();
+            var flatUsers = await AsyncEnumerableExtensions.FlattenAsync(users);
+            var filteredUsers = flatUsers.Where(x => !x.IsBot).ToList();
+            var sb = new StringBuilder();
+            sb.AppendLine($"I can find {filteredUsers.Count} users here.");
+            foreach (var user in filteredUsers)
+            {
+                sb.AppendLine(user.Username);
+            }
+            await ReplyAsync(sb.ToString());
+        }
+
     }
 }

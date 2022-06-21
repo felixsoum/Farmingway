@@ -17,8 +17,11 @@ namespace Farmingway
 
         public async Task MainAsync()
         {
-            
-            client = new DiscordSocketClient();
+            client = new DiscordSocketClient(new DiscordSocketConfig
+            {
+                AlwaysDownloadUsers = true,
+                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers
+            });
             commandService = new CommandService();
             commandHandler = new CommandHandler(client, commandService);
 
