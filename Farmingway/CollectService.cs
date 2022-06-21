@@ -3,6 +3,7 @@ using Farmingway.RestResponses;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using Discord;
 
 namespace Farmingway
 {
@@ -28,15 +29,15 @@ namespace Farmingway
             return response.Data;
         }
 
-        public static CharacterResponse GetCharacterFromDiscord(ulong id)
+        public static CharacterResponse GetCharacterFromDiscord(IUser user)
         {
-            var request = new RestRequest($"users/{id}").AddParameter("ids", "true");
+            var request = new RestRequest($"users/{user.Id}").AddParameter("ids", "true");
             var response = Client.Execute<CharacterResponse>(request);
 
             if (response.Data?.Mounts == null)
             {
                 throw new NotFoundException(
-                    "The specified user does not have a character registered with FFXIV Collect."
+                    $"{user.Username}#{user.Discriminator} does not have a character registered with FFXIV Collect."
                 );
             }
             

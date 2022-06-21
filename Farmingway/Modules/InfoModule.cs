@@ -1,6 +1,8 @@
 ﻿using Discord.Commands;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Farmingway.RestResponses;
@@ -53,7 +55,7 @@ namespace Farmingway.Modules
 
         [Command("find")]
         [Summary("Prints information about a character by Discord username")]
-        public Task FindByUserAsync([Remainder][Summary("The user requested")] IUser user)
+        public Task FindByUserAsync([Remainder][Discord.Commands.Summary("The user requested")] IUser user)
         {
             try
             {
@@ -68,29 +70,76 @@ namespace Farmingway.Modules
         
         [Command("find")]
         [Summary("Prints information about a character by Discord username")]
-        public async Task FindByUsernameAsync([Remainder][Summary("The user requested")] string username)
+        public async Task FindByUsernameAsync([Summary("The user requested")] params string[] usernames)
         {
-            var userList = await (Context.User as IGuildUser).Guild.SearchUsersAsync(username);
+            if (usernames.Length == 0)
+            {
+                await ReplyAsync(embed: CreateErrorEmbed("No user specified"));
+                return;
+            }
 
-            if (userList.Count != 1)
-            { 
-                await ReplyAsync(embed: CreateErrorEmbed(
-                    userList.Count == 0
-                        ? "Could not find user"
-                        : "Found multiple users (this will be turned into a prompt eventually)"
-                ));
+            var multipleResults = new List<string>();
+            var noResults = new List<string>();
+            var matchedUsers = new List<IGuildUser>();
+
+            foreach (var username in usernames)
+            {
+                var userList = await (Context.User as IGuildUser).Guild.SearchUsersAsync(username, 5);
+
+                if (userList.Count == 0)
+                {
+                    noResults.Add(username);
+                }
+                else if (userList.Count > 1)
+                {
+                    multipleResults.Add(username);
+                }
+                else
+                {
+                    matchedUsers.Add(userList.First());
+                }
+            }
+
+            if (noResults.Count > 0 || multipleResults.Count > 0)
+            {
+                var sb = new StringBuilder();
+                if (noResults.Count > 0)
+                {
+                    sb.AppendLine(
+                        $"I couldn't find a matching user for the following search: {string.Join(", ", noResults)}"
+                    );
+                }
+
+                if (multipleResults.Count > 0)
+                {
+                    sb.AppendLine(
+                        $"I found multiple users matching the following search. Please use their full username: {string.Join(", ", multipleResults)}"
+                    );
+                }
+
+                if (matchedUsers.Count > 0)
+                {
+                    var matchedUsernames = matchedUsers.Select(u => $"{u.Username}#{u.Discriminator}");
+                    sb.AppendLine(
+                        $"I was able to find a match for the following users: {string.Join(", ", matchedUsernames)}"
+                    );
+                }
+
+                await ReplyAsync(embed: CreateErrorEmbed(sb.ToString()));
                 return;
             }
             
-            try
+            foreach (var user in matchedUsers)
             {
-                var user = userList.First();
-                await ReplyAsync(embed: CreateCharacterEmbed(user));
-            }
-            catch(Exception e)
-            {
-                Console.Write("ERROR: " + e.Message);
-                await ReplyAsync(embed: CreateErrorEmbed(e.Message));
+                try
+                {
+                    await ReplyAsync(embed: CreateCharacterEmbed(user));
+                }
+                catch(Exception e)
+                {
+                    Console.Write("ERROR: " + e.Message);
+                    await ReplyAsync(embed: CreateErrorEmbed(e.Message));
+                }
             }
         }
 
@@ -103,7 +152,7 @@ namespace Farmingway.Modules
         {
             var builder = new EmbedBuilder();
             
-            var character = CollectService.GetCharacterFromDiscord(user.Id);
+            var character = CollectService.GetCharacterFromDiscord(user);
 
             MountResponse mount;
             try
@@ -119,7 +168,7 @@ namespace Farmingway.Modules
             
             builder.WithColor(new Color(0, 255, 0))
                 .WithAuthor(
-                    $"Character data for Discord user {user.Username}#{user.DiscriminatorValue:D4}",
+                    $"Character data for Discord user {user.Username}#{user.Discriminator}",
                     user.GetAvatarUrl()
                 )
                 .AddField("Name", character.Name)
