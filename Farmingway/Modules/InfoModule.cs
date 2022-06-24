@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
-using Discord.WebSocket;
 using Farmingway.RestResponses;
 
 namespace Farmingway.Modules
@@ -80,7 +79,7 @@ namespace Farmingway.Modules
             List<IGuildUser> matchedUsers;
             try
             {
-                matchedUsers = await DiscordUtils.getUsersFromUsernames(Context, usernames);
+                matchedUsers = await DiscordUtils.GetUsersFromUsernames(Context, usernames);
             }
             catch (Exception e)
             {

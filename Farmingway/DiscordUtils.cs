@@ -17,7 +17,7 @@ namespace Farmingway
         /// <param name="usernames">List of usernames to search for</param>
         /// <returns>List of users matching usernames</returns>
         /// <exception cref="Exception">If multiple and/or no matches are found for a given user</exception>
-        public static async Task<List<IGuildUser>> getUsersFromUsernames(ICommandContext context, string[] usernames)
+        public static async Task<List<IGuildUser>> GetUsersFromUsernames(ICommandContext context, string[] usernames)
         {
             if (usernames.Length == 0)
             {
