@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Farmingway.RestResponses;
 
 namespace Farmingway
 {
@@ -75,6 +76,64 @@ namespace Farmingway
             }
 
             return matchedUsers;
+        }
+        
+        /// <summary>
+        /// Create an embed with a Discord user's character details
+        /// </summary>
+        /// <param name="user">The Discord user to build an embed for</param>
+        /// <returns>An embed containing a character's name, home server, number of mounts, and mount with the highest ID</returns>
+        public static Embed CreateCharacterEmbed(IUser user)
+        {
+            var builder = new EmbedBuilder();
+            
+            var character = CollectService.GetCharacterFromDiscord(user);
+
+            MountResponse mount;
+            try
+            {
+                var highestMountID = character.Mounts.IDs.Last();
+                mount = CollectService.GetMount(highestMountID);
+            }
+            catch (InvalidOperationException)
+            {
+                // User has no mounts
+                mount = null;
+            }
+            
+            builder.WithColor(new Color(0, 255, 0))
+                .WithAuthor(
+                    $"Character data for Discord user {user.Username}#{user.Discriminator}",
+                    user.GetAvatarUrl()
+                )
+                .AddField("Name", character.Name)
+                .AddField("Server", character.Server)
+                .AddField("Mounts", character.Mounts.Count)
+                .AddField(
+                    "Highest Mount",  
+                    mount == null 
+                        ? "No mounts found" 
+                        : $"{mount.Name} (ID {mount.Id})"
+                )
+                .WithImageUrl(character.Portrait);
+
+            return builder.Build();
+        }
+
+        /// <summary>
+        /// Create an embed with error details
+        /// </summary>
+        /// <param name="message">The error message to include in the embed</param>
+        /// <returns>An embed with details about an internal error</returns>
+        public static Embed CreateErrorEmbed(string message)
+        {
+            var builder = new EmbedBuilder();
+
+            builder.WithColor(new Color(255, 0, 0))
+                .WithTitle("Error")
+                .WithDescription(message);
+
+            return builder.Build();
         }
     }
 }
