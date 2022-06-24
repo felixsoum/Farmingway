@@ -133,6 +133,7 @@
     <Compile Include="DiscordUtils.cs" />
     <Compile Include="Exceptions\NotFoundException.cs" />
     <Compile Include="Modules\ListModule.cs" />
+    <Compile Include="Modules\MountsModule.cs" />
     <Compile Include="Modules\SystemModule.cs" />
     <Compile Include="MountDatabase.cs" />
     <Compile Include="RestResponses\CharacterResponse.cs" />
