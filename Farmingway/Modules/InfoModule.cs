@@ -56,7 +56,7 @@ namespace Farmingway.Modules
 
         [Command("find")]
         [Summary("Prints information about a character by Discord username")]
-        public async Task FindByUserAsync([Summary("The user requested")] params SocketGuildUser[] users)
+        public async Task FindByUserAsync([Summary("The user requested")] params IGuildUser[] users)
         {
             foreach (var user in users)
             {
@@ -77,75 +77,18 @@ namespace Farmingway.Modules
         [Summary("Prints information about a character by Discord username")]
         public async Task FindByUsernameAsync([Summary("The user requested")] params string[] usernames)
         {
-            if (usernames.Length == 0)
+            List<IGuildUser> matchedUsers;
+            try
             {
-                await ReplyAsync(embed: CreateErrorEmbed("No user specified"));
+                matchedUsers = await DiscordUtils.getUsersFromUsernames(Context, usernames);
+            }
+            catch (Exception e)
+            {
+                await ReplyAsync(embed: CreateErrorEmbed(e.Message));
                 return;
             }
 
-            var multipleResults = new List<string>();
-            var noResults = new List<string>();
-            var matchedUsers = new List<IGuildUser>();
-
-            foreach (var username in usernames)
-            {
-                var userList = await (Context.User as IGuildUser).Guild.SearchUsersAsync(username, 5);
-
-                if (userList.Count == 0)
-                {
-                    noResults.Add(username);
-                }
-                else if (userList.Count > 1)
-                {
-                    multipleResults.Add(username);
-                }
-                else
-                {
-                    matchedUsers.Add(userList.First());
-                }
-            }
-
-            if (noResults.Count > 0 || multipleResults.Count > 0)
-            {
-                var sb = new StringBuilder();
-                if (noResults.Count > 0)
-                {
-                    sb.AppendLine(
-                        $"I couldn't find a matching user for the following search: {string.Join(", ", noResults)}"
-                    );
-                }
-
-                if (multipleResults.Count > 0)
-                {
-                    sb.AppendLine(
-                        $"I found multiple users matching the following search. Please use their full username: {string.Join(", ", multipleResults)}"
-                    );
-                }
-
-                if (matchedUsers.Count > 0)
-                {
-                    var matchedUsernames = matchedUsers.Select(u => $"{u.Username}#{u.Discriminator}");
-                    sb.AppendLine(
-                        $"I was able to find a match for the following users: {string.Join(", ", matchedUsernames)}"
-                    );
-                }
-
-                await ReplyAsync(embed: CreateErrorEmbed(sb.ToString()));
-                return;
-            }
-            
-            foreach (var user in matchedUsers)
-            {
-                try
-                {
-                    await ReplyAsync(embed: CreateCharacterEmbed(user));
-                }
-                catch(Exception e)
-                {
-                    Console.Write("ERROR: " + e.Message);
-                    await ReplyAsync(embed: CreateErrorEmbed(e.Message));
-                }
-            }
+            await FindByUserAsync(matchedUsers.ToArray());
         }
 
         /// <summary>
