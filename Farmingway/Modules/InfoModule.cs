@@ -25,7 +25,7 @@ namespace Farmingway.Modules
         public Task CharAsync([Remainder][Summary("The id of your character")] int charId)
         {
             var embed = new EmbedBuilder();
-            
+
             try
             {
                 var character = CollectService.GetCharacter(charId);
@@ -41,7 +41,7 @@ namespace Farmingway.Modules
                     .AddField("Highest Mount", $"{mount.Name} (ID {mount.Id})")
                     .WithImageUrl(character.Portrait);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.Write("ERROR: " + e.Message);
                 embed.WithColor(new Color(255, 0, 0))
@@ -62,15 +62,15 @@ namespace Farmingway.Modules
                 {
                     await ReplyAsync(embed: DiscordUtils.CreateCharacterEmbed(user));
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Console.Write("ERROR: " + e.Message);
                     await ReplyAsync(embed: DiscordUtils.CreateErrorEmbed(e.Message));
                 }
             }
-            
+
         }
-        
+
         [Command("find")]
         [Summary("Prints information about a character by Discord username")]
         public async Task FindByUsernameAsync([Summary("The user requested")] params string[] usernames)
@@ -91,20 +91,67 @@ namespace Farmingway.Modules
 
         // !whoshere
         [Command("whoshere")]
-        [Summary("Print list of users in thread.")]
-        public async Task WhosHereASync()
+        [Summary("Print list of users in current channel.")]
+        public async Task WhosHereAsync()
         {
-            var users = Context.Channel.GetUsersAsync();
-            var flatUsers = await AsyncEnumerableExtensions.FlattenAsync(users);
-            var filteredUsers = flatUsers.Where(x => !x.IsBot).ToList();
+            var filteredUsers = new List<IGuildUser>();
+
+            if (Context.Channel.GetChannelType() == ChannelType.PublicThread)
+            {
+                var thread = Context.Guild.GetThreadChannel(Context.Channel.Id);
+                var users = await thread.GetUsersAsync();
+                filteredUsers = users.Where(x => !x.IsBot).ToList<IGuildUser>();
+            }
+            else
+            {
+                var users = Context.Channel.GetUsersAsync();
+                var flatUsers = await AsyncEnumerableExtensions.FlattenAsync(users);
+                filteredUsers = flatUsers.Where(x => !x.IsBot && x is IGuildUser).Select(x => (IGuildUser)x).ToList();
+            }
+
             var sb = new StringBuilder();
             sb.AppendLine($"I can find {filteredUsers.Count} users here.");
             foreach (var user in filteredUsers)
             {
-                sb.AppendLine(user.Username);
+                sb.AppendLine(user.DisplayName);
             }
             await ReplyAsync(sb.ToString());
         }
 
+        // !channelcheck
+        [Command("channelcheck")]
+        [Summary("Print info on the current channel.")]
+        public async Task ChannelCheckAsync()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Channel name: " + Context.Channel.Name);
+            sb.AppendLine("Channel type: " + Context.Channel.GetChannelType());
+            sb.AppendLine("Channel ID: " + Context.Channel.Id);
+            await ReplyAsync(sb.ToString());
+        }
+
+        // !threadscheck
+        [Command("threadscheck")]
+        [Summary("Print info on all threads.")]
+        public async Task ThreadsCheckAsync()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Checking threads...");
+            foreach (var thread in Context.Guild.ThreadChannels)
+            {
+                sb.AppendLine($"Thread name: **{thread.Name}**");
+                sb.AppendLine($"Thread ID: {thread.Id}");
+
+                var users = await thread.GetUsersAsync();
+                var filteredUsers = users.Where(x => !x.IsBot).ToList();
+
+                sb.AppendLine($"User count: {filteredUsers.Count}");
+                foreach (var user in filteredUsers)
+                {
+                    sb.AppendLine(user.DisplayName);
+                }
+            }
+            await ReplyAsync(sb.ToString());
+        }
     }
 }
