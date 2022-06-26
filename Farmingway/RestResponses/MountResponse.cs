@@ -17,6 +17,9 @@ namespace Farmingway.RestResponses
 
         [JsonProperty(PropertyName = "image")]
         public string Image { get; set; }
+        
+        [JsonProperty(PropertyName = "owned")]
+        public string Owned { get; set; }
 
         [JsonProperty(PropertyName = "sources")]
         public MountSourceResponse[] Sources { get; set; }

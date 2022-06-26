@@ -104,5 +104,16 @@ namespace Farmingway
             }
             return gatos.Values.ToList();
         }
+
+        internal static List<MountResponse> GetTrialMounts()
+        {
+            return mounts.Values
+                .Where(
+                    m =>
+                    {
+                        return Array.Exists(m.Sources, s => s.Type.Equals("Trial"));
+                    }
+                ).ToList();
+        }
     }
 }
