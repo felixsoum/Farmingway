@@ -29,9 +29,18 @@ namespace Farmingway
             var noResults = new List<string>();
             var matchedUsers = new List<IGuildUser>();
 
+            if (!(context.User is IGuildUser user))
+            {
+                // Should never happen
+                throw new Exception("Could not get user from context");
+            }
+            
             foreach (var username in usernames)
             {
-                var userList = await (context.User as IGuildUser).Guild.SearchUsersAsync(username, 5);
+                var allUsers = await user.Guild.SearchUsersAsync(username, 5);
+                
+                // Filter out bots and the user that used the command
+                var userList = allUsers.Where(u => !u.IsBot && u.Id != user.Id).ToList();
 
                 if (userList.Count == 0)
                 {
