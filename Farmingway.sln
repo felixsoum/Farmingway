@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farmingway", "Farmingway\Farmingway.csproj", "{AAEC9380-BD76-4F09-AD4F-575D63B0338F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetStone", "..\Netstone\NetStone\NetStone.csproj", "{B34FC48F-7902-4184-AB14-BC356D57931F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{AAEC9380-BD76-4F09-AD4F-575D63B0338F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AAEC9380-BD76-4F09-AD4F-575D63B0338F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AAEC9380-BD76-4F09-AD4F-575D63B0338F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B34FC48F-7902-4184-AB14-BC356D57931F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B34FC48F-7902-4184-AB14-BC356D57931F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B34FC48F-7902-4184-AB14-BC356D57931F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B34FC48F-7902-4184-AB14-BC356D57931F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

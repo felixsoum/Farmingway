@@ -10,10 +10,8 @@
       <PackageReference Include="RestSharp" Version="108.0.2-alpha.0.1" />
     </ItemGroup>
 
-    <!-- TODO Add Netstone as a Nuget package once it has been updated
     <ItemGroup>
       <ProjectReference Include="..\..\Netstone\NetStone\NetStone.csproj" />
     </ItemGroup>
-    -->
 
 </Project>

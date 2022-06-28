@@ -50,8 +50,7 @@ namespace Farmingway.Modules
             return MountByCharacterResponse(characters);
         }
 
-        // TODO Enable lodestone search when Netstone is updated
-        // [Command("mountsbyid")]
+        [Command("mountsbyid")]
         public async Task MountByLodestoneIdXIVAPIAsync([Summary("The characters to search")] params int[] charIds)
         {
             if (!_service.isInit)
