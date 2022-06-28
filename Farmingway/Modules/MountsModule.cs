@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -11,6 +10,8 @@ namespace Farmingway.Modules
 {
     public class MountsModule : ModuleBase<SocketCommandContext>
     {
+        private static NetstoneService _service = new();
+
         [Command("mounts")]
         [Summary("Prints mounts that users are missing")]
         public Task MountByUserAsync([Summary("The users to search")] params IGuildUser[] users)
@@ -19,7 +20,8 @@ namespace Farmingway.Modules
             userList.Insert(0, (IGuildUser)Context.User);
 
             var characters = userList.Select(CollectService.GetCharacterFromDiscord).ToList();
-            return ReplyAsync(embed: Suggest(characters));
+
+            return MountByCharacterResponse(characters);
         }
         
         [Command("mounts")]
@@ -45,44 +47,63 @@ namespace Farmingway.Modules
         public Task MountByLodestoneIdAsync([Summary("The characters to search")] params int[] charIds)
         {
             var characters = charIds.Select(CollectService.GetCharacter).ToList();
-            return ReplyAsync(embed: Suggest(characters));
+            return MountByCharacterResponse(characters);
         }
-        
-        private Embed Suggest(List<CharacterResponse> characters)
+
+        // TODO Enable lodestone search when Netstone is updated
+        // [Command("mountsbyid")]
+        public async Task MountByLodestoneIdXIVAPIAsync([Summary("The characters to search")] params int[] charIds)
+        {
+            if (!_service.isInit)
+            {
+                await _service.Init();
+            }
+            
+            var mountLists = await Task.WhenAll(charIds.Select(id => _service.GetMountIDs(id)));
+            var names = await Task.WhenAll(charIds.Select(id => _service.GetName(id)));
+            await ReplyAsync(embed: Suggest(names.ToList(), mountLists.ToList()));
+        }
+
+        private Task MountByCharacterResponse(List<CharacterResponse> characters)
         {
             var mountLists = characters.Select(c => new HashSet<int>(c.Mounts.IDs)).ToList();
-            var mountCount = MountDatabase.GetTrialMounts().ToDictionary(
-                mount => mount.Id, 
-                mount => mountLists.Count(s => s.Contains(mount.Id))
-            );
+            var names = characters.Select(c => c.Name).ToList();
+            
+            return ReplyAsync(embed: Suggest(names, mountLists));
+        }
+        
+        private Embed Suggest(List<string> names, List<HashSet<int>> mountLists)
+        {
+            var mountCount = MountDatabase.GetTrialMounts().Select(m => new MountCount
+            {
+                count = mountLists.Count(s => s.Contains(m.Id)),
+                mount = m
+            });
 
             // Take the 5 least-collected mounts from the group
-            var suggestion = mountCount.Where(e => e.Value < characters.Count)
-                .OrderBy(e => e.Value)
-                .ThenByDescending(e =>
+            var suggestion = mountCount.Where(m => m.count < mountLists.Count)
+                .OrderBy(m => m.count)
+                .ThenByDescending(m =>
                 {
-                    var ownedString = MountDatabase.mounts[e.Key].Owned;
+                    var ownedString = m.mount.Owned;
                     return float.Parse(ownedString.Substring(0, ownedString.Length - 1));
                 })
                 .Take(5)
-                .ToImmutableSortedDictionary();
-            
-            var charNames = characters.Select(c => c.Name);
+                .ToList();
             
             var embed = new EmbedBuilder();
-            embed.WithTitle($"Farmingway's suggestion for {string.Join(", ", charNames)}")
+            embed.WithTitle($"Farmingway's suggestion for {string.Join(", ", names)}")
                 .WithColor(new Color(0, 255, 0));
 
             if (suggestion.Count > 0)
             {
                 foreach (var i in suggestion)
                 {
-                    var mount = MountDatabase.mounts[i.Key];
+                    var mount = i.mount;
                     var info = $"{mount.Sources[0].Text} -- obtained by " +
-                               (i.Value > 0 ? $"{i.Value} in group, " : "") + $"{mount.Owned} overall";
+                               (i.count > 0 ? $"{i.count} in group, " : "") + $"{mount.Owned} overall";
                     embed.AddField(mount.Name, info);
                 }
-
             }
             else
             {
@@ -91,5 +112,11 @@ namespace Farmingway.Modules
 
             return embed.Build();
         }
+    }
+    
+    internal class MountCount
+    {
+        public int count { get; set; }
+        public MountResponse mount { get; set; }
     }
 }

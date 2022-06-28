@@ -115,5 +115,10 @@ namespace Farmingway
                     }
                 ).ToList();
         }
+
+        internal static int GetMountId(string name)
+        {
+            return mounts.Values.FirstOrDefault(m => m.Name.Equals(name))?.Id ?? -1;
+        }
     }
 }
