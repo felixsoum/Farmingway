@@ -10,7 +10,32 @@ namespace Farmingway.Modules
 {
     public class MountsModule : ModuleBase<SocketCommandContext>
     {
+        class StoredSuggestion
+        {
+            public List<string> names;
+            public IEnumerable<MountCount> storedMountCounts;
+
+            public StoredSuggestion(List<string> names, IEnumerable<MountCount> storedMountCounts)
+            {
+                this.names = names;
+                this.storedMountCounts = storedMountCounts;
+            }
+
+            public int Count => storedMountCounts.ToList().Count;
+
+            public StoredSuggestion TakeFirstFive()
+            {
+                return new StoredSuggestion(names, storedMountCounts.Take(5));
+            }
+
+            public StoredSuggestion TakePastFive()
+            {
+                return new StoredSuggestion(names, storedMountCounts.TakeLast(Count - 5));
+            }
+        }
+
         private static NetstoneService _service = new();
+        private static Dictionary<ulong, StoredSuggestion> storedMountCounts = new();
 
         [Command("mounts")]
         [Summary("Prints mounts that users are missing")]
@@ -60,7 +85,28 @@ namespace Farmingway.Modules
             
             var mountLists = await Task.WhenAll(charIds.Select(id => _service.GetMountIDs(id)));
             var names = await Task.WhenAll(charIds.Select(id => _service.GetName(id)));
-            await ReplyAsync(embed: Suggest(names.ToList(), mountLists.ToList()));
+
+            var mountCount = MountDatabase.GetTrialMounts().Select(m => new MountCount
+            {
+                count = mountLists.Count(s => s.Contains(m.Id)),
+                mount = m
+            });
+
+            var suggestion = mountCount.Where(m => m.count < mountLists.ToList().Count)
+                .OrderBy(m => m.count)
+                .ThenByDescending(m =>
+                {
+                    var ownedString = m.mount.Owned;
+                    return float.Parse(ownedString.Substring(0, ownedString.Length - 1));
+                })
+                .ToList();
+
+            var storedSuggestion = new StoredSuggestion(names.ToList(), suggestion);
+            ulong key = Context.Message.Id;
+            storedMountCounts.Add(key, storedSuggestion.TakePastFive());
+
+            var builder = new ComponentBuilder().WithButton("More?", key.ToString());
+            await ReplyAsync(embed: Suggest(storedSuggestion.TakeFirstFive()), components: builder.Build());
         }
 
         private Task MountByCharacterResponse(List<CharacterResponse> characters)
@@ -70,7 +116,57 @@ namespace Farmingway.Modules
             
             return ReplyAsync(embed: Suggest(names, mountLists));
         }
-        
+
+        public static Tuple<Embed, bool> SuggestMore(ulong key)
+        {
+            if (storedMountCounts.ContainsKey(key))
+            {
+                var storedSuggestion = storedMountCounts[key];
+                var embedResult = Suggest(storedSuggestion.TakeFirstFive());
+
+                if (storedSuggestion.Count > 5)
+                {
+                    storedMountCounts[key] = storedSuggestion.TakePastFive();
+                    return new Tuple<Embed, bool>(embedResult, true);
+                }
+                else
+                {
+                    storedMountCounts.Remove(key);
+                    return new Tuple<Embed, bool>(embedResult, false);
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static Embed Suggest(StoredSuggestion storedSuggestion)
+        {
+            var suggestion = storedSuggestion.storedMountCounts.ToList();
+
+            var embed = new EmbedBuilder();
+            embed.WithTitle($"Farmingway's suggestion for {string.Join(", ", storedSuggestion.names)}")
+                .WithColor(new Color(0, 255, 0));
+
+            if (suggestion.Count > 0)
+            {
+                foreach (var i in suggestion)
+                {
+                    var mount = i.mount;
+                    var info = $"{mount.Sources[0].Text} -- obtained by " +
+                               (i.count > 0 ? $"{i.count} in group, " : "") + $"{mount.Owned} overall";
+                    embed.AddField(mount.Name, info);
+                }
+            }
+            else
+            {
+                embed.WithDescription("Could not find a suitable trial farm suggestion");
+            }
+
+            return embed.Build();
+        }
+
         private Embed Suggest(List<string> names, List<HashSet<int>> mountLists)
         {
             var mountCount = MountDatabase.GetTrialMounts().Select(m => new MountCount

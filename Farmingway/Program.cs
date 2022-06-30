@@ -26,6 +26,7 @@ namespace Farmingway
             commandHandler = new CommandHandler(client, commandService);
 
             client.Log += Log;
+            client.ButtonExecuted += HandleButtonExecuted;
             commandService.Log += Log;
 
             //  You can assign your bot token to a string, and pass that in to connect.
@@ -48,6 +49,27 @@ namespace Farmingway
             {
                 while (!isExiting) { }
             });
+        }
+
+        private async Task HandleButtonExecuted(SocketMessageComponent component)
+        {
+            var result = Modules.MountsModule.SuggestMore(ulong.Parse(component.Data.CustomId));
+            if (result != null)
+            {
+                if (result.Item2) // Is there still more?
+                {
+                    var builder = new ComponentBuilder().WithButton("More?", component.Data.CustomId);
+                    await component.RespondAsync(embed: result.Item1, components: builder.Build());
+                }
+                else
+                {
+                    await component.RespondAsync(embed: result.Item1);
+                }
+            }
+            else
+            {
+                await component.RespondAsync($"{component.User.Mention}! There are no more suggestions...");
+            }
         }
 
         private Task Log(LogMessage msg)
