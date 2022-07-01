@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Farmingway.RestResponses;
+using Farmingway.Services;
 
 namespace Farmingway.Modules
 {

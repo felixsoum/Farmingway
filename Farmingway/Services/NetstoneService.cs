@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using NetStone;
 
-namespace Farmingway
+namespace Farmingway.Services
 {
     public class NetstoneService
     {

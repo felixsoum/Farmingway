@@ -1,11 +1,9 @@
-﻿using Farmingway.Exceptions;
+﻿using Discord;
+using Farmingway.Exceptions;
 using Farmingway.RestResponses;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using Discord;
 
-namespace Farmingway
+namespace Farmingway.Services
 {
     /**
      * Easy interaction with the FFXIV Collect API
