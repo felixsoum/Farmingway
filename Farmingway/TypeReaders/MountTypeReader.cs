@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 
@@ -12,34 +11,33 @@ namespace Farmingway.TypeReaders
         {
             var args = input.Split(" ");
 
-            var possibleMountType = args.First();
-            if (possibleMountType.Equals(""))
-            {
-                return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "No args provided"));
-            }
-            
             string mountType = null;
-            List<string> charIdStrings;
-            if (int.TryParse(possibleMountType, out _))
+            var charIds = new HashSet<int>();
+            foreach (var arg in args)
             {
-                // Mount type not specified
-                charIdStrings = args.ToList();
-            }
-            else
-            {
-                mountType = possibleMountType;
-                charIdStrings = args.Skip(1).ToList();
-            }
-
-            List<int> charIds = new List<int>();
-            foreach (var idString in charIdStrings)
-            {
-                if (!int.TryParse(idString, out var id))
+                if (arg.Equals(""))
                 {
-                    return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "Non-numeric Lodestone ID detected"));
+                    return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "No args provided"));
                 }
                 
-                charIds.Add(id);
+                if (int.TryParse(arg, out var i))
+                {
+                    charIds.Add(i);
+                }
+                else
+                {
+                    if (mountType != null)
+                    {
+                        return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "Specified multiple mount types"));
+                    }
+                    
+                    mountType = arg;
+                }
+            }
+
+            if (charIds.Count == 0)
+            {
+                return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "No character IDs specified"));
             }
 
             return Task.FromResult(TypeReaderResult.FromSuccess(new MountTypeParams(charIds, mountType)));
@@ -48,10 +46,10 @@ namespace Farmingway.TypeReaders
 
     public class MountTypeParams
     {
-        public List<int> charIds { get; set; }
+        public HashSet<int> charIds { get; set; }
         public string mountType { get; set; }
 
-        public MountTypeParams(List<int> charIds, string mountType)
+        public MountTypeParams(HashSet<int> charIds, string mountType)
         {
             this.charIds = charIds;
             this.mountType = mountType;
