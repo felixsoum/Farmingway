@@ -134,6 +134,13 @@ namespace Farmingway.Modules
             await ReplyAsync(embed: Suggest(storedSuggestion.TakeFirstFive()), components: builder.Build());
         }
 
+        [Command("sm")]
+        public async Task StandardMountsByIdAsync(string mountType = null)
+        {
+            var userIds = new HashSet<int> {18997658, 36828752, 15921164, 30744572, 18356514, 37378384};
+            await MountByLodestoneIdXIVAPIAsync(new MountTypeParams(userIds, mountType));
+        }
+
         private Task MountByCharacterResponse(List<CharacterResponse> characters)
         {
             var mountLists = characters.Select(c => new HashSet<int>(c.Mounts.IDs)).ToList();
