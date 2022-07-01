@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Farmingway.TypeReaders;
 
 namespace Farmingway
 {
@@ -23,6 +24,8 @@ namespace Farmingway
             // Hook the MessageReceived event into our command handler
             _client.MessageReceived += HandleCommandAsync;
 
+            _commands.AddTypeReader(typeof(MountTypeParams), new MountTypeReader());
+            
             // Here we discover all of the command modules in the entry 
             // assembly and load them. Starting from Discord.NET 2.0, a
             // service provider is required to be passed into the

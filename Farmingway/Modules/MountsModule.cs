@@ -6,6 +6,7 @@ using Discord;
 using Discord.Commands;
 using Farmingway.RestResponses;
 using Farmingway.Services;
+using Farmingway.TypeReaders;
 
 namespace Farmingway.Modules
 {
@@ -77,18 +78,28 @@ namespace Farmingway.Modules
         }
 
         [Command("mountsbyid")]
-        public async Task MountByLodestoneIdXIVAPIAsync(
-            [Summary("The characters to search")] params int[] charIds
-        ) {
+        public async Task MountByLodestoneIdXIVAPIAsync([Remainder] MountTypeParams searchParams) {
             if (!_service.isInit)
             {
                 await _service.Init();
+            }
+
+            var charIds = searchParams.charIds;
+            var fullMountList = searchParams.mountType == null 
+                ? MountDatabase.GetTrialAndRaid() 
+                : MountDatabase.GetMountsByOrigin(searchParams.mountType);
+
+            if (fullMountList == null)
+            {
+                await ReplyAsync(embed: DiscordUtils.CreateErrorEmbed(
+                    "Invalid farm option. Please specify `trial`, `raid`, or omit the parameter to search for both."));
+                return;
             }
             
             var mountLists = await Task.WhenAll(charIds.Select(id => _service.GetMountIDs(id)));
             var names = await Task.WhenAll(charIds.Select(id => _service.GetName(id)));
 
-            var mountCount = MountDatabase.GetTrialAndRaid().Select(m => new MountCount
+            var mountCount = fullMountList.Select(m => new MountCount
             {
                 count = mountLists.Count(s => s.Contains(m.Id)),
                 mount = m
