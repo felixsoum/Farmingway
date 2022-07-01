@@ -27,6 +27,7 @@ namespace Farmingway.Services
             var mounts = await _client.GetCharacterMount(id.ToString());
             return mounts
                 .Collectables
+                .Where(c => MountDatabase.mounts.ContainsKey(c.Name))
                 .Select(c => MountDatabase.mounts[c.Name].Id)
                 .ToHashSet();
         }

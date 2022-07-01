@@ -106,15 +106,31 @@ namespace Farmingway
             return gatos.Values.ToList();
         }
 
-        internal static List<MountResponse> GetTrialMounts()
+        internal static List<MountResponse> GetMountsByOrigin(string mountType)
         {
-            return mounts.Values
-                .Where(
-                    m =>
-                    {
-                        return Array.Exists(m.Sources, s => s.Type.Equals("Trial"));
-                    }
-                ).ToList();
+            if (mountType.Equals("trial", StringComparison.InvariantCultureIgnoreCase) 
+                || mountType.Equals("raid", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return mounts
+                    .Values
+                    .Where(m => m.Sources[0].Type.Equals(mountType, StringComparison.InvariantCultureIgnoreCase))
+                    .ToList();
+            }
+
+            return null;
+        }
+
+        internal static List<MountResponse> GetTrialAndRaid()
+        {
+            return mounts
+                .Values
+                .Where(m =>
+                {
+                    var mountType = m.Sources[0].Type;
+                    return mountType.Equals("trial", StringComparison.InvariantCultureIgnoreCase) ||
+                           mountType.Equals("raid", StringComparison.InvariantCultureIgnoreCase);
+                })
+                .ToList();
         }
     }
 }

@@ -77,8 +77,9 @@ namespace Farmingway.Modules
         }
 
         [Command("mountsbyid")]
-        public async Task MountByLodestoneIdXIVAPIAsync([Summary("The characters to search")] params int[] charIds)
-        {
+        public async Task MountByLodestoneIdXIVAPIAsync(
+            [Summary("The characters to search")] params int[] charIds
+        ) {
             if (!_service.isInit)
             {
                 await _service.Init();
@@ -87,7 +88,7 @@ namespace Farmingway.Modules
             var mountLists = await Task.WhenAll(charIds.Select(id => _service.GetMountIDs(id)));
             var names = await Task.WhenAll(charIds.Select(id => _service.GetName(id)));
 
-            var mountCount = MountDatabase.GetTrialMounts().Select(m => new MountCount
+            var mountCount = MountDatabase.GetTrialAndRaid().Select(m => new MountCount
             {
                 count = mountLists.Count(s => s.Contains(m.Id)),
                 mount = m
@@ -170,7 +171,7 @@ namespace Farmingway.Modules
 
         private Embed Suggest(List<string> names, List<HashSet<int>> mountLists)
         {
-            var mountCount = MountDatabase.GetTrialMounts().Select(m => new MountCount
+            var mountCount = MountDatabase.GetTrialAndRaid().Select(m => new MountCount
             {
                 count = mountLists.Count(s => s.Contains(m.Id)),
                 mount = m
