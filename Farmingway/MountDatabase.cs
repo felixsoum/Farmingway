@@ -8,7 +8,7 @@ namespace Farmingway
 {
     internal static class MountDatabase
     {
-        internal static Dictionary<int, MountResponse> mounts = new Dictionary<int, MountResponse>();
+        internal static Dictionary<string, MountResponse> mounts = new();
 
         internal static async Task Init()
         {
@@ -17,7 +17,7 @@ namespace Farmingway
                 var data = CollectService.GetMounts();
                 foreach (var mount in data)
                 {
-                    mounts.Add(mount.Id, mount);
+                    mounts.Add(mount.Name, mount);
                 }
 
                 Console.WriteLine($"Successfully recorded {mounts.Count} mounts.");
@@ -27,11 +27,11 @@ namespace Farmingway
         internal static List<MountResponse> GetPonies()
         {
             var ponies = new SortedList<int, MountResponse>();
-            foreach (var mount in mounts)
+            foreach (var mount in mounts.Values)
             {
-                if (IsPony(mount.Key))
+                if (IsPony(mount.Id))
                 {
-                    ponies.Add(mount.Key, mount.Value);
+                    ponies.Add(mount.Id, mount);
                 }
             }
             return ponies.Values.ToList();
@@ -56,11 +56,11 @@ namespace Farmingway
         internal static List<MountResponse> GetBirdies()
         {
             var birdies = new SortedList<int, MountResponse>();
-            foreach (var mount in mounts)
+            foreach (var mount in mounts.Values)
             {
-                if (mount.Value.Name.Contains("Lanner"))
+                if (mount.Name.Contains("Lanner"))
                 {
-                    birdies.Add(mount.Key, mount.Value);
+                    birdies.Add(mount.Id, mount);
                 }
             }
             return birdies.Values.ToList();
@@ -69,11 +69,11 @@ namespace Farmingway
         internal static List<MountResponse> GetDoggos()
         {
             var doggos = new SortedList<int, MountResponse>();
-            foreach (var mount in mounts)
+            foreach (var mount in mounts.Values)
             {
-                if (mount.Value.Name.Contains("Kamuy") && mount.Key != 181)
+                if (mount.Name.Contains("Kamuy") && mount.Id != 181)
                 {
-                    doggos.Add(mount.Key, mount.Value);
+                    doggos.Add(mount.Id, mount);
                 }
             }
             return doggos.Values.ToList();
@@ -82,11 +82,11 @@ namespace Farmingway
         internal static List<MountResponse> GetGwibs()
         {
             var gwibbers = new SortedList<int, MountResponse>();
-            foreach (var mount in mounts)
+            foreach (var mount in mounts.Values)
             {
-                if (mount.Value.Name.Contains("Gwiber"))
+                if (mount.Name.Contains("Gwiber"))
                 {
-                    gwibbers.Add(mount.Key, mount.Value);
+                    gwibbers.Add(mount.Id, mount);
                 }
             }
             return gwibbers.Values.ToList();
@@ -95,11 +95,11 @@ namespace Farmingway
         internal static List<MountResponse> GetGatos()
         {
             var gatos = new SortedList<int, MountResponse>();
-            foreach (var mount in mounts)
+            foreach (var mount in mounts.Values)
             {
-                if (mount.Value.Name.Contains("Lynx"))
+                if (mount.Name.Contains("Lynx"))
                 {
-                    gatos.Add(mount.Key, mount.Value);
+                    gatos.Add(mount.Id, mount);
                 }
             }
             return gatos.Values.ToList();
@@ -114,11 +114,6 @@ namespace Farmingway
                         return Array.Exists(m.Sources, s => s.Type.Equals("Trial"));
                     }
                 ).ToList();
-        }
-
-        internal static int GetMountId(string name)
-        {
-            return mounts.Values.FirstOrDefault(m => m.Name.Equals(name))?.Id ?? -1;
         }
     }
 }
