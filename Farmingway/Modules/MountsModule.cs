@@ -13,27 +13,57 @@ namespace Farmingway.Modules
 {
     public class MountsModule : ModuleBase<SocketCommandContext>
     {
+        const char BackButtonKeycode = 'b';
+        const char NextButtonKeycode = 'n';
+
+        public static bool IsNextButtonKeycode(char code) => code == NextButtonKeycode;
+        public static string MakeBackButtonKeycode(ulong key) => BackButtonKeycode.ToString() + key;
+        public static string MakeNextButtonKeycode(ulong key) => NextButtonKeycode.ToString() + key;
+
         class StoredSuggestion
         {
             public List<string> names;
-            public IEnumerable<MountCount> storedMountCounts;
-
+            public List<MountCount> storedMountCounts;
+            public int pageIndex;
+            const int ResultsPerPage = 5;
             public StoredSuggestion(List<string> names, IEnumerable<MountCount> storedMountCounts)
             {
                 this.names = names;
-                this.storedMountCounts = storedMountCounts;
+                this.storedMountCounts = storedMountCounts.ToList();
             }
 
+            public int PageCount => (Count - 1) / ResultsPerPage + 1;
             public int Count => storedMountCounts.ToList().Count;
 
-            public StoredSuggestion TakeFirstFive()
+            public List<MountCount> TakePage()
             {
-                return new StoredSuggestion(names, storedMountCounts.Take(5));
+                var result = new List<MountCount>();
+                for (int i = 0; i < ResultsPerPage; i++)
+                {
+                    int index = i + pageIndex * ResultsPerPage;
+                    if (index >= storedMountCounts.Count)
+                    {
+                        break;
+                    }
+                    result.Add(storedMountCounts[index]);
+                }
+                return result;
             }
 
-            public StoredSuggestion TakePastFive()
+            public Tuple<bool, bool> GetNavigationState() => new(HasBack(), HasNext());
+
+            public bool HasBack() =>  pageIndex > 0;
+
+            internal bool HasNext() => (pageIndex + 1) * ResultsPerPage < storedMountCounts.Count;
+
+            internal void Next()
             {
-                return new StoredSuggestion(names, storedMountCounts.TakeLast(Count - 5));
+                pageIndex++;
+            }
+
+            internal void Back()
+            {
+                pageIndex--;
             }
         }
 
@@ -51,7 +81,7 @@ namespace Farmingway.Modules
 
             return MountByCharacterResponse(characters);
         }
-        
+
         [Command("mounts")]
         [Summary("Prints mounts that users are missing")]
         public async Task MountByUsernameAsync([Summary("The users to search")] params string[] usernames)
@@ -69,7 +99,7 @@ namespace Farmingway.Modules
 
             await MountByUserAsync(matchedUsers.ToArray());
         }
-        
+
         [Command("mounts")]
         [Summary("Prints mounts that users are missing")]
         public Task MountByLodestoneIdAsync([Summary("The characters to search")] params int[] charIds)
@@ -79,15 +109,16 @@ namespace Farmingway.Modules
         }
 
         [Command("mountsbyid")]
-        public async Task MountByLodestoneIdXIVAPIAsync([Remainder] MountTypeParams searchParams) {
+        public async Task MountByLodestoneIdXIVAPIAsync([Remainder] MountTypeParams searchParams)
+        {
             if (!_service.isInit)
             {
                 await _service.Init();
             }
 
             var charIds = searchParams.charIds;
-            var fullMountList = searchParams.mountType == null 
-                ? MountDatabase.GetTrialAndRaid() 
+            var fullMountList = searchParams.mountType == null
+                ? MountDatabase.GetTrialAndRaid()
                 : MountDatabase.GetMountsByOrigin(searchParams.mountType);
 
             if (fullMountList == null)
@@ -109,7 +140,7 @@ namespace Farmingway.Modules
                 await ReplyAsync(embed: DiscordUtils.CreateErrorEmbed(e.Message));
                 return;
             }
-            
+
 
             var mountCount = fullMountList.Select(m => new MountCount
             {
@@ -128,16 +159,18 @@ namespace Farmingway.Modules
 
             var storedSuggestion = new StoredSuggestion(names.ToList(), suggestion);
             ulong key = Context.Message.Id;
-            storedMountCounts.Add(key, storedSuggestion.TakePastFive());
+            storedMountCounts.Add(key, storedSuggestion);
 
-            var builder = new ComponentBuilder().WithButton("More?", key.ToString());
-            await ReplyAsync(embed: Suggest(storedSuggestion.TakeFirstFive()), components: builder.Build());
+            var builder = new ComponentBuilder()
+                .WithButton("Back", 'b' + key.ToString(), disabled: true, emote: new Emoji("\u2B05"))
+                .WithButton("Next", 'n' + key.ToString(), emote: new Emoji("\u27A1"));
+            await ReplyAsync(embed: Suggest(storedSuggestion), components: builder.Build());
         }
 
         [Command("sm")]
         public async Task StandardMountsByIdAsync(string mountType = null)
         {
-            var userIds = new HashSet<int> {18997658, 36828752, 15921164, 30744572, 18356514, 37378384};
+            var userIds = new HashSet<int> { 18997658, 36828752, 15921164, 30744572, 18356514, 37378384 };
             await MountByLodestoneIdXIVAPIAsync(new MountTypeParams(userIds, mountType));
         }
 
@@ -145,27 +178,26 @@ namespace Farmingway.Modules
         {
             var mountLists = characters.Select(c => new HashSet<int>(c.Mounts.IDs)).ToList();
             var names = characters.Select(c => c.Name).ToList();
-            
+
             return ReplyAsync(embed: Suggest(names, mountLists));
         }
 
-        public static Tuple<Embed, bool> SuggestMore(ulong key)
+        public static Tuple<Embed, Tuple<bool, bool>> SuggestMore(ulong key, bool isNext)
         {
             if (storedMountCounts.ContainsKey(key))
             {
                 var storedSuggestion = storedMountCounts[key];
-                var embedResult = Suggest(storedSuggestion.TakeFirstFive());
 
-                if (storedSuggestion.Count > 5)
+                if (isNext)
                 {
-                    storedMountCounts[key] = storedSuggestion.TakePastFive();
-                    return new Tuple<Embed, bool>(embedResult, true);
+                    storedSuggestion.Next();
                 }
                 else
                 {
-                    storedMountCounts.Remove(key);
-                    return new Tuple<Embed, bool>(embedResult, false);
+                    storedSuggestion.Back();
                 }
+
+                return new(Suggest(storedSuggestion), storedSuggestion.GetNavigationState());
             }
             else
             {
@@ -175,10 +207,11 @@ namespace Farmingway.Modules
 
         private static Embed Suggest(StoredSuggestion storedSuggestion)
         {
-            var suggestion = storedSuggestion.storedMountCounts.ToList();
+            var suggestion = storedSuggestion.TakePage();
+            string pageInfo = $"(page {storedSuggestion.pageIndex + 1}/{storedSuggestion.PageCount})";
 
             var embed = new EmbedBuilder();
-            embed.WithTitle($"Farmingway's suggestion for {string.Join(", ", storedSuggestion.names)}")
+            embed.WithTitle($"Farmingway's suggestion for {string.Join(", ", storedSuggestion.names)}. {pageInfo}")
                 .WithColor(new Color(0, 255, 0));
 
             if (suggestion.Count > 0)
@@ -217,7 +250,7 @@ namespace Farmingway.Modules
                 })
                 .Take(5)
                 .ToList();
-            
+
             var embed = new EmbedBuilder();
             embed.WithTitle($"Farmingway's suggestion for {string.Join(", ", names)}")
                 .WithColor(new Color(0, 255, 0));
@@ -240,7 +273,7 @@ namespace Farmingway.Modules
             return embed.Build();
         }
     }
-    
+
     internal class MountCount
     {
         public int count { get; set; }

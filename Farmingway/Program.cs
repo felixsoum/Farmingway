@@ -53,18 +53,25 @@ namespace Farmingway
 
         private async Task HandleButtonExecuted(SocketMessageComponent component)
         {
-            var result = Modules.MountsModule.SuggestMore(ulong.Parse(component.Data.CustomId));
-            if (result != null)
+            char code = component.Data.CustomId[0];
+            ulong key = ulong.Parse(component.Data.CustomId.Substring(1));
+
+            bool isNext = Modules.MountsModule.IsNextButtonKeycode(code);
+            var result = Modules.MountsModule.SuggestMore(key, isNext);
+
+            if (result != null && result.Item1 != null)
             {
-                if (result.Item2) // Is there still more?
+                await component.UpdateAsync(x =>
                 {
-                    var builder = new ComponentBuilder().WithButton("More?", component.Data.CustomId);
-                    await component.RespondAsync(embed: result.Item1, components: builder.Build());
-                }
-                else
-                {
-                    await component.RespondAsync(embed: result.Item1);
-                }
+                    x.Embed = result.Item1;
+                    bool hasBack = result.Item2.Item1;
+                    bool hasNext = result.Item2.Item2;
+
+                    x.Components = new ComponentBuilder()
+                    .WithButton("Back", Modules.MountsModule.MakeBackButtonKeycode(key), disabled: !hasBack, emote: new Emoji("\u2B05"))
+                    .WithButton("Next", Modules.MountsModule.MakeNextButtonKeycode(key), disabled: !hasNext, emote: new Emoji("\u27A1"))
+                    .Build();
+                });
             }
             else
             {
