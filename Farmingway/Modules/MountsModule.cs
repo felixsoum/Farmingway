@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Farmingway.Exceptions;
 using Farmingway.RestResponses;
 using Farmingway.Services;
 using Farmingway.TypeReaders;
@@ -95,9 +96,20 @@ namespace Farmingway.Modules
                     "Invalid farm option. Please specify `trial`, `raid`, or omit the parameter to search for both."));
                 return;
             }
+
+            HashSet<int>[] mountLists;
+            string[] names;
+            try
+            {
+                mountLists = await Task.WhenAll(charIds.Select(id => _service.GetMountIDs(id)));
+                names = await Task.WhenAll(charIds.Select(id => _service.GetName(id)));
+            }
+            catch (NotFoundException e)
+            {
+                await ReplyAsync(embed: DiscordUtils.CreateErrorEmbed(e.Message));
+                return;
+            }
             
-            var mountLists = await Task.WhenAll(charIds.Select(id => _service.GetMountIDs(id)));
-            var names = await Task.WhenAll(charIds.Select(id => _service.GetName(id)));
 
             var mountCount = fullMountList.Select(m => new MountCount
             {
