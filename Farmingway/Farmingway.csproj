@@ -55,4 +55,7 @@
   <ItemGroup>
     <Folder Include="Properties\ServiceDependencies\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Netstone\NetStone\NetStone.csproj" />
+  </ItemGroup>
 </Project>
