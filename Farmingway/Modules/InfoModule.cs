@@ -12,9 +12,6 @@ namespace Farmingway.Modules
     // Create a module with no prefix
     public class InfoModule : ModuleBase<SocketCommandContext>
     {
-        [Command("marco")]
-        public Task Marco() => ReplyAsync("Polo!");
-
         // ~say hello world -> hello world
         [Command("say")]
         [Summary("Echoes a message.")]
