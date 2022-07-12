@@ -167,6 +167,65 @@ namespace Farmingway.Modules
             await ReplyAsync(embed: Suggest(storedSuggestion), components: builder.Build());
         }
 
+        [Command("mountsbymentions")]
+        public async Task MountsByMentionsAsync(params string[] mentions)
+        {
+            RecordModule.InitDB();
+
+            if (!_service.isInit)
+            {
+                await _service.Init();
+            }
+
+            var charIds = mentions.Select(x => int.Parse(RecordModule.MentionToLodestoneID(x))).ToList();
+            var fullMountList = MountDatabase.GetTrialAndRaid();
+
+            if (fullMountList == null)
+            {
+                await ReplyAsync(embed: DiscordUtils.CreateErrorEmbed(
+                    "Invalid farm option. Please specify `trial`, `raid`, or omit the parameter to search for both."));
+                return;
+            }
+
+            HashSet<int>[] mountLists;
+            string[] names;
+            try
+            {
+                mountLists = await Task.WhenAll(charIds.Select(id => _service.GetMountIDs(id)));
+                names = charIds.Select(x => x.ToString()).ToArray();
+            }
+            catch (NotFoundException e)
+            {
+                await ReplyAsync(embed: DiscordUtils.CreateErrorEmbed(e.Message));
+                return;
+            }
+
+
+            var mountCount = fullMountList.Select(m => new MountCount
+            {
+                count = mountLists.Count(s => s.Contains(m.Id)),
+                mount = m
+            });
+
+            var suggestion = mountCount.Where(m => m.count < mountLists.ToList().Count)
+                .OrderBy(m => m.count)
+                .ThenByDescending(m =>
+                {
+                    var ownedString = m.mount.Owned;
+                    return float.Parse(ownedString.Substring(0, ownedString.Length - 1));
+                })
+                .ToList();
+
+            var storedSuggestion = new StoredSuggestion(names.ToList(), suggestion);
+            ulong key = Context.Message.Id;
+            storedMountCounts.Add(key, storedSuggestion);
+
+            var builder = new ComponentBuilder()
+                .WithButton("Back", 'b' + key.ToString(), disabled: true, emote: new Emoji("\u2B05"))
+                .WithButton("Next", 'n' + key.ToString(), emote: new Emoji("\u27A1"));
+            await ReplyAsync(embed: Suggest(storedSuggestion), components: builder.Build());
+        }
+
         [Command("sm")]
         public async Task StandardMountsByIdAsync(string mountType = null)
         {
