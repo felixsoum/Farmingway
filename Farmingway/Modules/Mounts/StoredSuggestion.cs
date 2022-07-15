@@ -70,7 +70,7 @@ public class StoredSuggestion
         }
         else
         {
-            eb.WithDescription("Could not find a suitable trial farm suggestion");
+            eb.WithDescription("Could not find a suitable farm suggestion");
         }
 
         var embed = eb.Build();
