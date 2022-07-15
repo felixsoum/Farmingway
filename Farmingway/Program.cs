@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
+using Farmingway.Modules.Mounts;
 
 namespace Farmingway
 {
@@ -56,21 +57,16 @@ namespace Farmingway
             char code = component.Data.CustomId[0];
             ulong key = ulong.Parse(component.Data.CustomId.Substring(1));
 
-            bool isNext = Modules.MountsModule.IsNextButtonKeycode(code);
-            var result = Modules.MountsModule.SuggestMore(key, isNext);
+            bool isNext = StoredSuggestion.IsNextButtonKeycode(code);
+            var result = Modules.MountsModule.GetSuggestion(key);
 
-            if (result != null && result.Item1 != null)
+            if (result != null)
             {
+                var messageDetails = result.BuildPage(isNext, key);
                 await component.UpdateAsync(x =>
                 {
-                    x.Embed = result.Item1;
-                    bool hasBack = result.Item2.Item1;
-                    bool hasNext = result.Item2.Item2;
-
-                    x.Components = new ComponentBuilder()
-                    .WithButton("Back", Modules.MountsModule.MakeBackButtonKeycode(key), disabled: !hasBack, emote: new Emoji("\u2B05"))
-                    .WithButton("Next", Modules.MountsModule.MakeNextButtonKeycode(key), disabled: !hasNext, emote: new Emoji("\u27A1"))
-                    .Build();
+                    x.Embed = messageDetails.Item1;
+                    x.Components = messageDetails.Item2;
                 });
             }
             else
