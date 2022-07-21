@@ -113,7 +113,10 @@ namespace Farmingway
             {
                 return mounts
                     .Values
-                    .Where(m => m.Sources[0].Type.Equals(mountType, StringComparison.InvariantCultureIgnoreCase))
+                    .Where(m => 
+                        !m.Name.Equals("Rathalos") 
+                        && m.Sources[0].Type.Equals(mountType, StringComparison.InvariantCultureIgnoreCase)
+                    )
                     .ToList();
             }
 
@@ -127,8 +130,9 @@ namespace Farmingway
                 .Where(m =>
                 {
                     var mountType = m.Sources[0].Type;
-                    return mountType.Equals("trial", StringComparison.InvariantCultureIgnoreCase) ||
-                           mountType.Equals("raid", StringComparison.InvariantCultureIgnoreCase);
+                    return !m.Name.Equals("Rathalos") 
+                           && (mountType.Equals("trial", StringComparison.InvariantCultureIgnoreCase) 
+                               || mountType.Equals("raid", StringComparison.InvariantCultureIgnoreCase));
                 })
                 .ToList();
         }
