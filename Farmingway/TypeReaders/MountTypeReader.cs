@@ -12,6 +12,7 @@ namespace Farmingway.TypeReaders
             var args = input.Split(" ");
 
             string mountType = null;
+            int suggestionPreference = 1;
             var charIds = new HashSet<int>();
             foreach (var arg in args)
             {
@@ -22,7 +23,14 @@ namespace Farmingway.TypeReaders
                 
                 if (int.TryParse(arg, out var i))
                 {
-                    charIds.Add(i);
+                    if (i is > 1 and < 8)
+                    {
+                        suggestionPreference = i;
+                    }
+                    else
+                    {
+                        charIds.Add(i);
+                    }
                 }
                 else
                 {
@@ -40,7 +48,7 @@ namespace Farmingway.TypeReaders
                 return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "No character IDs specified"));
             }
 
-            return Task.FromResult(TypeReaderResult.FromSuccess(new MountTypeParams(charIds, mountType)));
+            return Task.FromResult(TypeReaderResult.FromSuccess(new MountTypeParams(charIds, mountType, suggestionPreference)));
         }
     }
 
@@ -48,11 +56,22 @@ namespace Farmingway.TypeReaders
     {
         public HashSet<int> charIds { get; set; }
         public string mountType { get; set; }
+        public int suggestionPreference { get; set; }
 
-        public MountTypeParams(HashSet<int> charIds, string mountType)
+        /// Select a preset from 1-8:
+        /// 1- Order by ascending number of party players who possess a mount, then descending total players
+        /// 2- Order by ascending number of total players who possess a mount, then descending party players
+        /// 3- Order by ascending number of party players who possess a mount, then ascending total players
+        /// 4- Order by ascending number of total players who possess a mount, then ascending party players
+        /// 5- Order by descending number of party players who possess a mount, then descending total players
+        /// 6- Order by descending number of total players who possess a mount, then descending party players
+        /// 7- Order by descending number of party players who possess a mount, then ascending total players
+        /// 8- Order by descending number of total players who possess a mount, then ascending party players
+        public MountTypeParams(HashSet<int> charIds, string mountType, int suggestionPreference)
         {
             this.charIds = charIds;
             this.mountType = mountType;
+            this.suggestionPreference = suggestionPreference - 1; // 0-index this param
         }
     }
 }
