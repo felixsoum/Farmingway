@@ -7,13 +7,16 @@ using Farmingway.Services;
 using Farmingway.TypeReaders;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Farmingway.Modules
 {
     public class MountsModule : ModuleBase<SocketCommandContext>
     {
+        private static string ConnectionString => $"Server=tcp:farmingway.database.windows.net,1433;Initial Catalog=FarmingwayAlphaDB;Persist Security Info=False;User ID=Recordingway;Password={Secret.DatabasePassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
         private static NetstoneService _service = new();
         private static Dictionary<ulong, StoredSuggestion> storedMountCounts = new();
 
@@ -89,6 +92,53 @@ namespace Farmingway.Modules
 
             var charIds = mentions.Select(x => int.Parse(RecordModule.MentionToLodestoneID(x))).ToHashSet();
             await MountByLodestoneIdXIVAPIAsync(new MountTypeParams(charIds, null, 1));
+        }
+
+        [Command("vouch")]
+        public async Task VouchAsync(string mention, string firstName, string lastName, string world)
+        {
+            var sb = new StringBuilder();
+
+            if (!_service.isInit)
+            {
+                await _service.Init();
+            }
+
+            try
+            {
+                string lodestoneID = await _service.GetID(firstName + " " + lastName, world);
+                string connectionString = ConnectionString;
+                string fullName = firstName + " " + lastName;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string query = $"INSERT INTO Users VALUES ({RecordModule.MentionToDiscordID(mention)}, {lodestoneID});";
+                    string query2 = $"INSERT INTO Characters VALUES ({lodestoneID}, '{fullName}', '{world}');";
+                    sb.AppendLine(query);
+                    sb.AppendLine(query2);
+
+                    String sql = query;
+
+                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+
+                    String sql2 = query2;
+
+                    using (SqlCommand command = new SqlCommand(sql2, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                sb.AppendLine(e.Message);
+            }
+
+            await ReplyAsync(sb.ToString());
         }
 
         [Command("sm")]

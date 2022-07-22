@@ -65,7 +65,7 @@ namespace Farmingway.Modules
             return sb.ToString();
         }
 
-        static string MentionToDiscordID(string mention)
+        public static string MentionToDiscordID(string mention)
         {
             if (mention.Length < 3)
             {
@@ -118,8 +118,8 @@ namespace Farmingway.Modules
             await ReplyAsync(sb.ToString());
         }
 
-        [Command("select")]
-        public async Task SelectAsync()
+        [Command("selectusers")]
+        public async Task SelectUsersAsync()
         {
             var sb = new StringBuilder();
 
@@ -154,8 +154,8 @@ namespace Farmingway.Modules
             await ReplyAsync(sb.ToString());
         }
 
-        [Command("vouch")]
-        public async Task VouchAsync(string mention, string lodestoneID)
+        [Command("selectcharacters")]
+        public async Task SelectCharactersAsync()
         {
             var sb = new StringBuilder();
 
@@ -166,13 +166,19 @@ namespace Farmingway.Modules
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string query = $"INSERT INTO Users VALUES ({MentionToDiscordID(mention)}, {lodestoneID});";
+                    string query = "SELECT * FROM Characters";
                     sb.AppendLine(query);
                     String sql = query;
 
                     using (SqlCommand command = new SqlCommand(sql, connection))
                     {
-                        command.ExecuteNonQuery();
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                sb.AppendLine($"LodestoneID: {reader.GetString(0)} -> FullName: {reader.GetString(1)}, World: {reader.GetString(2)}");
+                            }
+                        }
                     }
                 }
             }
