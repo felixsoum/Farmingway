@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Farmingway.Exceptions;
 using Farmingway.Modules.Mounts;
 using Farmingway.Services;
 using Farmingway.TypeReaders;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Farmingway.Modules
 {
@@ -163,7 +164,28 @@ namespace Farmingway.Modules
             storedMountCounts.Add(messageId, suggestion);
             return suggestion;
         }
-    }
 
-    
+        public static async Task HandleButtonExecuted(SocketMessageComponent component)
+        {
+            char code = component.Data.CustomId[0];
+            ulong key = ulong.Parse(component.Data.CustomId.Substring(1));
+
+            bool isNext = StoredSuggestion.IsNextButtonKeycode(code);
+            var result = GetSuggestion(key);
+
+            if (result != null)
+            {
+                var messageDetails = result.BuildPage(isNext, key);
+                await component.UpdateAsync(x =>
+                {
+                    x.Embed = messageDetails.Item1;
+                    x.Components = messageDetails.Item2;
+                });
+            }
+            else
+            {
+                await component.RespondAsync($"{component.User.Mention}! There are no more suggestions...");
+            }
+        }
+    }
 }

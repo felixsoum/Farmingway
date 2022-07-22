@@ -3,7 +3,6 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
-using Farmingway.Modules.Mounts;
 
 namespace Farmingway
 {
@@ -27,7 +26,7 @@ namespace Farmingway
             commandHandler = new CommandHandler(client, commandService);
 
             client.Log += Log;
-            client.ButtonExecuted += HandleButtonExecuted;
+            client.ButtonExecuted += Modules.MountsModule.HandleButtonExecuted;
             commandService.Log += Log;
 
             //  You can assign your bot token to a string, and pass that in to connect.
@@ -50,29 +49,6 @@ namespace Farmingway
             {
                 while (!isExiting) { }
             });
-        }
-
-        private async Task HandleButtonExecuted(SocketMessageComponent component)
-        {
-            char code = component.Data.CustomId[0];
-            ulong key = ulong.Parse(component.Data.CustomId.Substring(1));
-
-            bool isNext = StoredSuggestion.IsNextButtonKeycode(code);
-            var result = Modules.MountsModule.GetSuggestion(key);
-
-            if (result != null)
-            {
-                var messageDetails = result.BuildPage(isNext, key);
-                await component.UpdateAsync(x =>
-                {
-                    x.Embed = messageDetails.Item1;
-                    x.Components = messageDetails.Item2;
-                });
-            }
-            else
-            {
-                await component.RespondAsync($"{component.User.Mention}! There are no more suggestions...");
-            }
         }
 
         private Task Log(LogMessage msg)
