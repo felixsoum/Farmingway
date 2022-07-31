@@ -107,10 +107,9 @@ namespace Farmingway.Modules
             try
             {
                 string lodestoneID = await _service.GetID(firstName + " " + lastName, world);
-                string connectionString = ConnectionString;
                 string fullName = firstName + " " + lastName;
 
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (var connection = RecordModule.CreateConnection())
                 {
                     connection.Open();
                     string query = $"INSERT INTO Users VALUES ({RecordModule.MentionToDiscordID(mention)}, {lodestoneID});";
@@ -120,14 +119,14 @@ namespace Farmingway.Modules
 
                     String sql = query;
 
-                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    using (var command = RecordModule.CreateCommand(sql, connection))
                     {
                         command.ExecuteNonQuery();
                     }
 
                     String sql2 = query2;
 
-                    using (SqlCommand command = new SqlCommand(sql2, connection))
+                    using (var command = RecordModule.CreateCommand(sql2, connection))
                     {
                         command.ExecuteNonQuery();
                     }

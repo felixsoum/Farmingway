@@ -1,7 +1,11 @@
-﻿using Discord.Commands;
+﻿#define SQLite
+
+using Discord.Commands;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -33,9 +37,7 @@ namespace Farmingway.Modules
 
             try
             {
-                string connectionString = ConnectionString;
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (var connection = CreateConnection())
                 {
                     connection.Open();
                     string query = "SELECT * FROM Users";
@@ -43,9 +45,9 @@ namespace Farmingway.Modules
                     String sql = query;
                     int IDCount = 0;
 
-                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    using (var command = CreateCommand(query, connection))
                     {
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (var reader = command.ExecuteReader())
                         {
                             while (reader.Read())
                             {
@@ -86,9 +88,7 @@ namespace Farmingway.Modules
 
             try
             {
-                string connectionString = ConnectionString;
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (var connection = CreateConnection())
                 {
                     connection.Open();
                     string query = "SELECT * FROM Users";
@@ -96,9 +96,9 @@ namespace Farmingway.Modules
                     String sql = query;
                     int IDCount = 0;
 
-                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    using (var command = CreateCommand(query, connection))
                     {
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (var reader = command.ExecuteReader())
                         {
                             while (reader.Read())
                             {
@@ -125,18 +125,16 @@ namespace Farmingway.Modules
 
             try
             {
-                string connectionString = ConnectionString;
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (var connection = CreateConnection())
                 {
                     connection.Open();
                     string query = "SELECT * FROM Users";
                     sb.AppendLine(query);
                     String sql = query;
 
-                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    using (var command = CreateCommand(query, connection))
                     {
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (var reader = command.ExecuteReader())
                         {
                             while (reader.Read())
                             {
@@ -161,18 +159,16 @@ namespace Farmingway.Modules
 
             try
             {
-                string connectionString = ConnectionString;
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (var connection = CreateConnection())
                 {
                     connection.Open();
                     string query = "SELECT * FROM Characters";
                     sb.AppendLine(query);
                     String sql = query;
 
-                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    using (var command = CreateCommand(query, connection))
                     {
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (var reader = command.ExecuteReader())
                         {
                             while (reader.Read())
                             {
@@ -190,23 +186,21 @@ namespace Farmingway.Modules
             await ReplyAsync(sb.ToString());
         }
 
-        [Command("delete")]
-        public async Task DeleteAsync(string mention)
+        [Command("deleteusers")]
+        public async Task DeleteUsersAsync()
         {
             var sb = new StringBuilder();
 
             try
             {
-                string connectionString = ConnectionString;
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (var connection = CreateConnection())
                 {
                     connection.Open();
-                    string query = $"DELETE FROM Users WHERE DiscordID={MentionToDiscordID(mention)};";
+                    string query = $"DELETE FROM Users";
                     sb.AppendLine(query);
                     String sql = query;
 
-                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    using (var command = CreateCommand(query, connection))
                     {
                         command.ExecuteNonQuery();
                     }
@@ -219,5 +213,55 @@ namespace Farmingway.Modules
 
             await ReplyAsync(sb.ToString());
         }
+
+        [Command("deleteCharacters")]
+        public async Task DeleteCharactersAsync()
+        {
+            var sb = new StringBuilder();
+
+            try
+            {
+                using (var connection = CreateConnection())
+                {
+                    connection.Open();
+                    string query = $"DELETE FROM Characters";
+                    sb.AppendLine(query);
+                    String sql = query;
+
+                    using (var command = CreateCommand(query, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                sb.AppendLine(e.Message);
+            }
+
+            await ReplyAsync(sb.ToString());
+        }
+
+#if !SQLite
+
+        public static SqlConnection CreateConnection() => new SqlConnection(ConnectionString);
+
+        public static SqlCommand CreateCommand(string query, SqlConnection connection) => new SqlCommand(query, connection);
+#else
+        public static SqliteConnection CreateConnection()
+        {
+            string projectDir = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+            return new SqliteConnection($"Data Source={Path.Combine(projectDir, "Recordingway.db")}");
+
+        }
+
+        public static SqliteCommand CreateCommand(string query, SqliteConnection connection)
+        {
+            var command = connection.CreateCommand();
+            command.CommandText = query;
+            return command;
+        }
+
+#endif
     }
 }
